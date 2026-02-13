@@ -1,5 +1,6 @@
-﻿using System.Diagnostics;
-using Microsoft.Data.Sqlite;
+﻿using Microsoft.Data.Sqlite;
+using System.Diagnostics;
+using System.Reflection.PortableExecutable;
 
 internal class MenuActions
 {
@@ -150,9 +151,44 @@ internal class MenuActions
         }
     }
 
-    internal static void ListCards()
+    internal static void ListCards(SqliteConnection conn)
     {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
+        Console.Clear();
+        Console.Write("Name to list cards for: ");
+        string input = Console.ReadLine()!;
+
+        using var getCardsCommand = conn.CreateCommand();
+        getCardsCommand.CommandText = @"
+                SELECT card_number 
+                FROM Cards
+                    JOIN People ON People.id = Cards.user_id
+                WHERE name = @name
+                ";
+        getCardsCommand.Parameters.AddWithValue("@name", input);
+
+
+        using var reader = getCardsCommand.ExecuteReader();
+
+        Stopwatch stopWatch = new Stopwatch();
+        stopWatch.Start();
+        if (!reader.HasRows) Console.WriteLine("no cards");
+        else
+        {
+            while (reader.Read())
+            {
+                string cardNumber = reader.GetString(0);
+                Console.WriteLine(cardNumber);
+            }
+        }
+        
+        stopWatch.Stop();
+        TimeSpan ts = stopWatch.Elapsed;
+        Console.CursorVisible = false;
+        Console.WriteLine($"Done after {ts.TotalSeconds:F3} seconds");
+        Console.Write("Press any key to return to main menu...");
+        Console.ReadKey(true);
+        Console.CursorVisible = true;
     }
 
     internal static void ListPeople(SqliteConnection conn)

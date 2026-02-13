@@ -27,7 +27,7 @@ while (true)
             break;
 
         case "3":
-            MenuActions.ListCards();
+            MenuActions.ListCards(connection);
             break;
 
         case "4":
