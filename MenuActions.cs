@@ -10,7 +10,6 @@ internal class MenuActions
         var choice = Console.ReadLine();
         Console.WriteLine();
 
-        
         using var pragmaCmd = conn.CreateCommand();
         pragmaCmd.CommandText = "PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;";
         pragmaCmd.ExecuteNonQuery();
@@ -36,16 +35,18 @@ internal class MenuActions
         Console.ReadKey(true);
     }
 
-    internal static void GenerateCards(SqliteConnection conn) {
+    internal static void GenerateCards(SqliteConnection conn)
+    {
         var rand = new Random();
         var personIds = new List<int>();
 
         using var getIds = conn.CreateCommand();
-        getIds.CommandText =
-                        @"SELECT Id FROM People";
+        getIds.CommandText = @"SELECT Id FROM People";
         using var reader = getIds.ExecuteReader();
         while (reader.Read())
-        { personIds.Add(reader.GetInt32(0)); }
+        {
+            personIds.Add(reader.GetInt32(0));
+        }
 
         var shuffledList = personIds.OrderBy(x => rand.Next()).ToList();
 
@@ -67,48 +68,43 @@ internal class MenuActions
                       FOREIGN KEY(user_id) REFERENCES People(id))";
         tableCommand.ExecuteNonQuery();
 
+        GenerateCard(group70, 1, 1);
+        GenerateCard(group20, 2, 2);
+        GenerateCard(group10, 3, 10);
 
-        GenerateCard(group70, 1); // Anropar metoden och skapar kort
-        GenerateCard(group20, 2);
-
-        foreach (var id in group10)
+        void GenerateCard(List<int> ids, int minCardsAmount, int maxCardsAmount)
         {
-            int cardCount = rand.Next(3, 11);
-            for (int i = 0; i < cardCount; i++)
+            using (var transaction = conn.BeginTransaction())
             {
-                using var cmd = conn.CreateCommand();
-                cmd.CommandText = @"
+                var command = conn.CreateCommand();
+                command.CommandText =
+                    @"
                       INSERT INTO Cards    (user_id, card_number)
                       VALUES($user_id, $card_number)";
-                cmd.Parameters.AddWithValue("$user_id", id);
-                cmd.Parameters.AddWithValue("$card_number", rand.Next(1000, 9999)); //SKAPA ISTÄLLET RANDOM CARD NUMBER METOD (GenerateCardNumber)
-                cmd.ExecuteNonQuery();
-            }
 
+                var cardNumberParameter = command.CreateParameter();
+                cardNumberParameter.ParameterName = "$card_number";
+                command.Parameters.Add(cardNumberParameter);
 
+                var userIdParameter = command.CreateParameter();
+                userIdParameter.ParameterName = "$user_id";
+                command.Parameters.Add(userIdParameter);
 
-
-        }
-        void GenerateCard(List<int> ids, int cardsAmount)
-        {
-
-            foreach (var id in ids)
-            {
-                for (int i = 0; i < cardsAmount; i++)
+                foreach (var id in ids)
                 {
-                    using var cmd = conn.CreateCommand();
-                    cmd.CommandText = @"
-                      INSERT INTO Cards    (user_id, card_number)
-                      VALUES($user_id, $card_number)";
-                    cmd.Parameters.AddWithValue("$user_id", id);
-                    cmd.Parameters.AddWithValue("$card_number", rand.Next(1000, 9999));
-                    cmd.ExecuteNonQuery();
+                    int cardCount = rand.Next(minCardsAmount, maxCardsAmount + 1);
+
+                    for (int i = 0; i < cardCount; i++)
+                    {
+                        userIdParameter.Value = id;
+                        cardNumberParameter.Value = rand.Next(1000, 9999);
+                        command.ExecuteNonQuery();
+                    }
                 }
+
+                transaction.Commit();
             }
         }
-        Console.WriteLine("Done! Press any key to return to main menu...");
-        Console.ReadKey(true);
-
     }
 
     private static void GeneratePeople(SqliteConnection conn, int n)
@@ -118,12 +114,8 @@ internal class MenuActions
             "CREATE TABLE IF NOT EXISTS People (Id INTEGER PRIMARY KEY, name TEXT);";
         tableCommand.ExecuteNonQuery();
 
-        
         var lines = File.ReadAllLines("MOCK_DATA.csv");
-        var names = lines
-            .Skip(1)
-            .Select(l => l.Split(','))
-            .ToArray();
+        var names = lines.Skip(1).Select(l => l.Split(',')).ToArray();
 
         var rand = new Random();
 
@@ -169,8 +161,10 @@ internal class MenuActions
         string? input = Console.ReadLine();
         int amount = 100;
 
-        if (!string.IsNullOrWhiteSpace(input) && int.TryParse(input, out int parsed)) amount = parsed;
-        if (amount > count) amount = count;
+        if (!string.IsNullOrWhiteSpace(input) && int.TryParse(input, out int parsed))
+            amount = parsed;
+        if (amount > count)
+            amount = count;
 
         using var peopleCommand = conn.CreateCommand();
         peopleCommand.CommandText = "SELECT Name FROM People LIMIT @amount";
@@ -191,7 +185,6 @@ internal class MenuActions
         Console.ReadKey();
         Console.CursorVisible = true;
     }
-
 
     internal static void ListTransactions()
     {
