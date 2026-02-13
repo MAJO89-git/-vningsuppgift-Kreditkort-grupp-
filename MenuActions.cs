@@ -36,7 +36,80 @@ internal class MenuActions
         Console.ReadKey(true);
     }
 
-    private static void GenerateCards(SqliteConnection conn) { }
+    internal static void GenerateCards(SqliteConnection conn) {
+        var rand = new Random();
+        var personIds = new List<int>();
+
+        using var getIds = conn.CreateCommand();
+        getIds.CommandText =
+                        @"SELECT Id FROM People";
+        using var reader = getIds.ExecuteReader();
+        while (reader.Read())
+        { personIds.Add(reader.GetInt32(0)); }
+
+        var shuffledList = personIds.OrderBy(x => rand.Next()).ToList();
+
+        int totalIds = shuffledList.Count;
+
+        int g70 = (int)(totalIds * 0.7);
+        int g20 = (int)(totalIds * 0.2);
+
+        var group70 = shuffledList.Take(g70).ToList();
+        var group20 = shuffledList.Skip(g70).Take(g20).ToList();
+        var group10 = shuffledList.Skip(g70 + g20).ToList();
+
+        using var tableCommand = conn.CreateCommand();
+        tableCommand.CommandText =
+            @"CREATE TABLE IF NOT EXISTS Cards (
+                      Id INTEGER PRIMARY KEY,
+                      card_number INTEGER,
+                      user_id INTEGER,
+                      FOREIGN KEY(user_id) REFERENCES People(id))";
+        tableCommand.ExecuteNonQuery();
+
+
+        GenerateCard(group70, 1); // Anropar metoden och skapar kort
+        GenerateCard(group20, 2);
+
+        foreach (var id in group10)
+        {
+            int cardCount = rand.Next(3, 11);
+            for (int i = 0; i < cardCount; i++)
+            {
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = @"
+                      INSERT INTO Cards    (user_id, card_number)
+                      VALUES($user_id, $card_number)";
+                cmd.Parameters.AddWithValue("$user_id", id);
+                cmd.Parameters.AddWithValue("$card_number", rand.Next(1000, 9999)); //SKAPA ISTÄLLET RANDOM CARD NUMBER METOD (GenerateCardNumber)
+                cmd.ExecuteNonQuery();
+            }
+
+
+
+
+        }
+        void GenerateCard(List<int> ids, int cardsAmount)
+        {
+
+            foreach (var id in ids)
+            {
+                for (int i = 0; i < cardsAmount; i++)
+                {
+                    using var cmd = conn.CreateCommand();
+                    cmd.CommandText = @"
+                      INSERT INTO Cards    (user_id, card_number)
+                      VALUES($user_id, $card_number)";
+                    cmd.Parameters.AddWithValue("$user_id", id);
+                    cmd.Parameters.AddWithValue("$card_number", rand.Next(1000, 9999));
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+        Console.WriteLine("Done! Press any key to return to main menu...");
+        Console.ReadKey(true);
+
+    }
 
     private static void GeneratePeople(SqliteConnection conn, int n)
     {

@@ -11,6 +11,7 @@ while (true)
     Console.WriteLine("2. List people");
     Console.WriteLine("3. List Cards");
     Console.WriteLine("4. List Transactions");
+    Console.WriteLine("5. Generate Kort");
 
     Console.Write("Choice: ");
     var choice = Console.ReadLine();
@@ -31,6 +32,10 @@ while (true)
 
         case "4":
             MenuActions.ListTransactions();
+            break;
+
+        case "5":
+            MenuActions.GenerateCards(connection);
             break;
 
         default:
