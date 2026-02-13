@@ -22,7 +22,7 @@ internal class MenuActions
 
         using var tableCommand = conn.CreateCommand();
         tableCommand.CommandText =
-            "CREATE TABLE IF NOT EXISTS People (firstname TEXT, lastname TEXT);";
+            "CREATE TABLE IF NOT EXISTS People (Id INTEGER PRIMARY KEY, name TEXT);";
         tableCommand.ExecuteNonQuery();
 
         var lines = File.ReadAllLines("MOCK_DATA.csv");
@@ -35,10 +35,8 @@ internal class MenuActions
             var lastName = lines[rand.Next(1, lines.Length)].Split(",")[1];
 
             using var command = conn.CreateCommand();
-            command.CommandText =
-                "INSERT INTO People(firstname, lastname) VALUES (@firstname, @lastname)";
-            command.Parameters.AddWithValue("@firstname", firstName);
-            command.Parameters.AddWithValue("@lastname", lastName);
+            command.CommandText = "INSERT INTO People(name) VALUES (@name)";
+            command.Parameters.AddWithValue("@name", $"{firstName} {lastName}");
             command.ExecuteNonQuery();
         }
     }
