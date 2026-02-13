@@ -1,5 +1,5 @@
-﻿using Microsoft.Data.Sqlite;
-using System.Diagnostics;
+﻿using System.Diagnostics;
+using Microsoft.Data.Sqlite;
 
 internal class MenuActions
 {
@@ -13,10 +13,10 @@ internal class MenuActions
         Stopwatch stopWatch = new Stopwatch();
         stopWatch.Start();
 
-        int n = 0;
         try
         {
-            n = string.IsNullOrWhiteSpace(choice) ? 1_000_000 : int.Parse(choice);
+            var numPeople = string.IsNullOrWhiteSpace(choice) ? 1_000_000 : int.Parse(choice);
+            GeneratePeople(conn, numPeople);
         }
         catch
         {
@@ -25,6 +25,20 @@ internal class MenuActions
             return;
         }
 
+        GenerateCards(conn);
+
+        stopWatch.Stop();
+        TimeSpan ts = stopWatch.Elapsed;
+
+        Console.WriteLine($"Done after {ts.TotalSeconds:F3} seconds");
+        Console.WriteLine("Done! Press any key to return to main menu...");
+        Console.ReadKey(true);
+    }
+
+    private static void GenerateCards(SqliteConnection conn) { }
+
+    private static void GeneratePeople(SqliteConnection conn, int n)
+    {
         using var tableCommand = conn.CreateCommand();
         tableCommand.CommandText =
             "CREATE TABLE IF NOT EXISTS People (Id INTEGER PRIMARY KEY, name TEXT);";
@@ -60,13 +74,6 @@ internal class MenuActions
 
             transaction.Commit();
         }
-
-        stopWatch.Stop();
-        TimeSpan ts = stopWatch.Elapsed;
-
-        Console.WriteLine($"Done after {ts.TotalSeconds:F3} seconds");
-        Console.WriteLine("Done! Press any key to return to main menu...");
-        Console.ReadKey(true);
     }
 
     internal static void ListCards()
