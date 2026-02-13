@@ -22,7 +22,7 @@ while (true)
             break;
 
         case "2":
-            MenuActions.ListPeople();
+            MenuActions.ListPeople(connection);
             break;
 
         case "3":

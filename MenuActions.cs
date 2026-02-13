@@ -81,10 +81,43 @@ internal class MenuActions
         throw new NotImplementedException();
     }
 
-    internal static void ListPeople()
+    internal static void ListPeople(SqliteConnection conn)
     {
-        throw new NotImplementedException();
+        using var amountCommand = conn.CreateCommand();
+        amountCommand.CommandText = "SELECT COUNT(*) FROM People";
+
+        var count = Convert.ToInt32(amountCommand.ExecuteScalar());
+
+        Console.Clear();
+        Console.WriteLine($"Antal personer i databasen ({count})");
+        Console.Write("Hur många vill du visa (standard 100): ");
+
+        string? input = Console.ReadLine();
+        int amount = 100;
+
+        if (!string.IsNullOrWhiteSpace(input) && int.TryParse(input, out int parsed)) amount = parsed;
+        if (amount > count) amount = count;
+
+        using var peopleCommand = conn.CreateCommand();
+        peopleCommand.CommandText = "SELECT Name FROM People LIMIT @amount";
+        peopleCommand.Parameters.AddWithValue("@amount", amount);
+
+        using var reader = peopleCommand.ExecuteReader();
+
+        Console.Clear();
+        Console.WriteLine($"Visar {amount} personer:\n");
+        while (reader.Read())
+        {
+            string name = reader.GetString(0);
+            Console.WriteLine(name);
+        }
+
+        Console.CursorVisible = false;
+        Console.Write("\nTryck valfri tangent för att fortsätta...");
+        Console.ReadKey();
+        Console.CursorVisible = true;
     }
+
 
     internal static void ListTransactions()
     {
