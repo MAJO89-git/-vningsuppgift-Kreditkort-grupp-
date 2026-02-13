@@ -10,9 +10,13 @@ internal class MenuActions
         var choice = Console.ReadLine();
         Console.WriteLine();
 
+        
+        using var pragmaCmd = conn.CreateCommand();
+        pragmaCmd.CommandText = "PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;";
+        pragmaCmd.ExecuteNonQuery();
+
         Stopwatch stopWatch = new Stopwatch();
         stopWatch.Start();
-
         try
         {
             var numPeople = string.IsNullOrWhiteSpace(choice) ? 1_000_000 : int.Parse(choice);
@@ -24,12 +28,9 @@ internal class MenuActions
             Console.ReadKey();
             return;
         }
-
         GenerateCards(conn);
-
         stopWatch.Stop();
         TimeSpan ts = stopWatch.Elapsed;
-
         Console.WriteLine($"Done after {ts.TotalSeconds:F3} seconds");
         Console.WriteLine("Done! Press any key to return to main menu...");
         Console.ReadKey(true);
@@ -44,31 +45,31 @@ internal class MenuActions
             "CREATE TABLE IF NOT EXISTS People (Id INTEGER PRIMARY KEY, name TEXT);";
         tableCommand.ExecuteNonQuery();
 
+        
         var lines = File.ReadAllLines("MOCK_DATA.csv");
+        var names = lines
+            .Skip(1)
+            .Select(l => l.Split(','))
+            .ToArray();
+
         var rand = new Random();
+
+        Console.WriteLine("Generating data...");
+        Console.WriteLine();
 
         using (var transaction = conn.BeginTransaction())
         {
             var command = conn.CreateCommand();
-            command.CommandText =
-                @"
-        INSERT INTO People(name)
-        VALUES ($name)
-    ";
+            command.CommandText = "INSERT INTO People(name) VALUES ($name)";
 
             var parameter = command.CreateParameter();
             parameter.ParameterName = "$name";
             command.Parameters.Add(parameter);
 
-            var random = new Random();
-            Console.WriteLine("Generating data...");
-            Console.WriteLine();
             for (var i = 0; i < n; i++)
             {
-                var firstName = lines[rand.Next(1, lines.Length)].Split(",")[0];
-                var lastName = lines[rand.Next(1, lines.Length)].Split(",")[1];
-
-                parameter.Value = $"{firstName} {lastName}";
+                var row = names[rand.Next(names.Length)];
+                parameter.Value = $"{row[0]} {row[1]}";
                 command.ExecuteNonQuery();
             }
 
