@@ -1,9 +1,46 @@
-﻿
+﻿using Microsoft.Data.Sqlite;
+
 internal class MenuActions
 {
-    internal static void GenerateData()
+    internal static void GenerateData(SqliteConnection conn)
     {
-        throw new NotImplementedException();
+        Console.Clear();
+        Console.Write("Number of people to generate: ");
+        var choice = Console.ReadLine();
+
+        int n = 0;
+        try
+        {
+            n = string.IsNullOrWhiteSpace(choice) ? 1_000_000 : int.Parse(choice);
+        }
+        catch
+        {
+            Console.WriteLine("Lämna tomt eller ange ett giltigt nummer");
+            Console.ReadKey();
+            return;
+        }
+
+        using var tableCommand = conn.CreateCommand();
+        tableCommand.CommandText =
+            "CREATE TABLE IF NOT EXISTS People (firstname TEXT, lastname TEXT);";
+        tableCommand.ExecuteNonQuery();
+
+        var lines = File.ReadAllLines("MOCK_DATA.csv");
+        var rand = new Random();
+
+        Console.WriteLine("Generating data...");
+        for (int i = 0; i <= n; i++)
+        {
+            var firstName = lines[rand.Next(1, lines.Length)].Split(",")[0];
+            var lastName = lines[rand.Next(1, lines.Length)].Split(",")[1];
+
+            using var command = conn.CreateCommand();
+            command.CommandText =
+                "INSERT INTO People(firstname, lastname) VALUES (@firstname, @lastname)";
+            command.Parameters.AddWithValue("@firstname", firstName);
+            command.Parameters.AddWithValue("@lastname", lastName);
+            command.ExecuteNonQuery();
+        }
     }
 
     internal static void ListCards()
@@ -21,3 +58,4 @@ internal class MenuActions
         throw new NotImplementedException();
     }
 }
+

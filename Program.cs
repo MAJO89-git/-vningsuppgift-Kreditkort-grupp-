@@ -1,5 +1,10 @@
-﻿while (true)
+﻿using Microsoft.Data.Sqlite;
+
+while (true)
 {
+    using var connection = new SqliteConnection("Data Source=cards.db");
+    connection.Open();
+
     Console.Clear();
     Console.WriteLine("What do you want to do?");
     Console.WriteLine("1. Generate mock data");
@@ -7,14 +12,13 @@
     Console.WriteLine("3. List Cards");
     Console.WriteLine("4. List Transactions");
 
-
     Console.Write("Choice: ");
     var choice = Console.ReadLine();
 
     switch (choice)
     {
         case "1":
-            MenuActions.GenerateData();
+            MenuActions.GenerateData(connection);
             break;
 
         case "2":
@@ -28,7 +32,6 @@
         case "4":
             MenuActions.ListTransactions();
             break;
-
 
         default:
             Console.WriteLine("Invalid option!");
