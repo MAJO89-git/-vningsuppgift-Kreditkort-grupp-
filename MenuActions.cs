@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.Sqlite;
+using System.Diagnostics;
 
 internal class MenuActions
 {
@@ -8,6 +9,9 @@ internal class MenuActions
         Console.Write("Number of people to generate: ");
         var choice = Console.ReadLine();
         Console.WriteLine();
+
+        Stopwatch stopWatch = new Stopwatch();
+        stopWatch.Start();
 
         int n = 0;
         try
@@ -56,6 +60,11 @@ internal class MenuActions
 
             transaction.Commit();
         }
+
+        stopWatch.Stop();
+        TimeSpan ts = stopWatch.Elapsed;
+
+        Console.WriteLine($"Done after {ts.TotalSeconds:F3} seconds");
         Console.WriteLine("Done! Press any key to return to main menu...");
         Console.ReadKey(true);
     }
