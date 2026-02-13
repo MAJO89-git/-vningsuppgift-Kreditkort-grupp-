@@ -28,8 +28,8 @@ internal class MenuActions
         var lines = File.ReadAllLines("MOCK_DATA.csv");
         var rand = new Random();
 
-        Console.WriteLine("Generating data...");
-        for (int i = 0; i <= n; i++)
+        Console.WriteLine("\nGenerating data...\n");
+        for (int i = 0; i < n; i++)
         {
             var firstName = lines[rand.Next(1, lines.Length)].Split(",")[0];
             var lastName = lines[rand.Next(1, lines.Length)].Split(",")[1];
@@ -39,6 +39,8 @@ internal class MenuActions
             command.Parameters.AddWithValue("@name", $"{firstName} {lastName}");
             command.ExecuteNonQuery();
         }
+        Console.WriteLine("Done! Press any key to return to main menu...");
+        Console.ReadKey(true);
     }
 
     internal static void ListCards()
