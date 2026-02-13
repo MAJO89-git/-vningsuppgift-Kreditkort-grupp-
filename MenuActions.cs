@@ -1,6 +1,6 @@
-﻿using Microsoft.Data.Sqlite;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Reflection.PortableExecutable;
+using Microsoft.Data.Sqlite;
 
 internal class MenuActions
 {
@@ -80,7 +80,7 @@ internal class MenuActions
                 var command = conn.CreateCommand();
                 command.CommandText =
                     @"
-                      INSERT INTO Cards    (user_id, card_number)
+                      INSERT INTO Cards (user_id, card_number)
                       VALUES($user_id, $card_number)";
 
                 var cardNumberParameter = command.CreateParameter();
@@ -150,21 +150,27 @@ internal class MenuActions
         Console.Write("Name to list cards for: ");
         string input = Console.ReadLine()!;
 
+        using var getUserId = conn.CreateCommand();
+        getUserId.CommandText = "Select Id FROM People WHERE name = @name LIMIT 1";
+        getUserId.Parameters.AddWithValue("@name", input);
+        var userId = getUserId.ExecuteScalar();
+
         using var getCardsCommand = conn.CreateCommand();
-        getCardsCommand.CommandText = @"
+        getCardsCommand.CommandText =
+            @"
                 SELECT card_number 
                 FROM Cards
                     JOIN People ON People.id = Cards.user_id
-                WHERE name = @name
+                WHERE Cards.user_id = @id
                 ";
-        getCardsCommand.Parameters.AddWithValue("@name", input);
-
+        getCardsCommand.Parameters.AddWithValue("@id", userId);
 
         using var reader = getCardsCommand.ExecuteReader();
 
         Stopwatch stopWatch = new Stopwatch();
         stopWatch.Start();
-        if (!reader.HasRows) Console.WriteLine("no cards");
+        if (!reader.HasRows)
+            Console.WriteLine("no cards");
         else
         {
             while (reader.Read())
@@ -173,7 +179,7 @@ internal class MenuActions
                 Console.WriteLine(cardNumber);
             }
         }
-        
+
         stopWatch.Stop();
         TimeSpan ts = stopWatch.Elapsed;
         Console.CursorVisible = false;
